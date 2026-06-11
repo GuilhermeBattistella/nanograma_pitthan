@@ -301,15 +301,16 @@ void inicia_tabuleiro(Celula tabuleiro[][COLUNAS], Nanograma *nanograma)
             if (nanograma->gabarito[i][j] == COLORIDO)
             {
                 nanograma->quant_celulas_pintar++;
-                // printf("%d, ", COLORIDO);
+                 printf("%d, ", COLORIDO);
             }
             else
             {
-                // printf("%d, ", VAZIO);
+                 printf("%d, ", VAZIO);
             }
         }
-        // printf("\n");
+         printf("\n");
     }
+    printf("\n\n");
 }
 
 void desenha_menu(Tela *t, Lista_Botao *button)
@@ -565,8 +566,8 @@ void verifica_clique(Tela *t, Celula tabuleiro[][COLUNAS], Nanograma *nanograma,
             // verifica se eh uma celula valida
             if (i >= 0 && i < LINHAS && j >= 0 && j < COLUNAS)
             {
+                if(nanograma->usuario_ganhou == true) return;
                 atualiza_historico_jogada(nanograma, i, j);
-
                 cicla_estado_celula(&tabuleiro[i][j]);
 
                 /* dica: aqui eh um bom lugar para verificar se o usuario venceu :) */
