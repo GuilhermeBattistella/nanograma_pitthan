@@ -28,6 +28,9 @@ void atualiza_historico_jogada(Nanograma *nanograma, int i, int j);
 void desenhar_botoes(Lista_Botao *button, Tela *t, Nanograma *nanograma);
 void desenhar_dica(Nanograma *nanograma, Celula tabuleiro[][COLUNAS]);
 void desenhar_vidas(Tela *t, Nanograma *nanograma);
+int verifica_gabarito(Nanograma *nanograma);
+void gera_numeros_gabarito(Nanograma *nanograma);
+void calcula_celulas_restante(Nanograma *nanograma, Celula tabuleiro[][COLUNAS]);
 
 int main(int argc, char **argv)
 {
@@ -87,7 +90,6 @@ void inicializa_jogo(Nanograma *nanograma)
     nanograma->dicas_restante = MAX_DICAS;
     nanograma->vidas_restante = MAX_VIDA;
     nanograma->modo = modo_atual;
-    printf("%d", nanograma->modo);
 }
 
 void define_botoes(Lista_Botao *btn, Nanograma *nanograma)
@@ -99,7 +101,6 @@ void define_botoes(Lista_Botao *btn, Nanograma *nanograma)
     btn->lista_btn[MENU] = cria_botao(550, 650, 100, 50);
     btn->lista_btn[DESFAZER] = cria_botao(150, 720, 100, 50);
     btn->lista_btn[DICA] = cria_botao(300, 720, 100, 50);
-    
 }
 
 Retangulo cria_botao(int x1, int y1, int width, int height)
@@ -114,19 +115,6 @@ void desenha_botao(Retangulo btn, char *txt, Tela *t)
     pos_texto.x += 5;
     pos_texto.y += 10;
     escreve_texto(t, pos_texto, txt);
-}
-int verifica_gabarito(Nanograma *nanograma)
-{
-    int total = 0;
-    for (int i = 0; i < LINHAS; i++)
-    {
-        for (int j = 0; j < COLUNAS; j++)
-        {
-            if (nanograma->gabarito[i][j] == 1)
-                total++;
-        }
-    }
-    return total;
 }
 void cria_gabarito(Nanograma *nanograma)
 {
@@ -148,7 +136,7 @@ void cria_gabarito(Nanograma *nanograma)
         }
     } while (verifica_gabarito(nanograma) < MIN_CEL_PINTAR);
 }
-void gera_numeros_array(Nanograma *nanograma)
+void gera_numeros_gabarito(Nanograma *nanograma)
 {
     int count, pos_array;
     int i, j;
@@ -198,6 +186,20 @@ void gera_numeros_array(Nanograma *nanograma)
         }
         nanograma->quant_numeros_coluna[j] = pos_array;
     }
+}
+
+int verifica_gabarito(Nanograma *nanograma)
+{
+    int total = 0;
+    for (int i = 0; i < LINHAS; i++)
+    {
+        for (int j = 0; j < COLUNAS; j++)
+        {
+            if (nanograma->gabarito[i][j] == 1)
+                total++;
+        }
+    }
+    return total;
 }
 
 bool verifica_vitoria(Nanograma *nanograma, Celula tabuleiro[][COLUNAS])
@@ -268,12 +270,14 @@ bool verifica_vitoria(Nanograma *nanograma, Celula tabuleiro[][COLUNAS])
 
 void limpa_tabuleiro(Celula tabuleiro[][COLUNAS], Nanograma *nanograma)
 {
-    if (nanograma->usuario_ganhou == true)
+    if (nanograma->usuario_ganhou)
         nanograma->usuario_ganhou = false;
+    if(nanograma->usuario_perdeu) nanograma->usuario_perdeu = false;
+    if(nanograma->modo == MD_NORMAL) nanograma->vidas_restante = MAX_VIDA;
     for (int i = 0; i < LINHAS; i++)
     {
         for (int j = 0; j < COLUNAS; j++)
-        {
+        {   
             tabuleiro[i][j].estado = VAZIO;
         }
     }
@@ -282,6 +286,7 @@ void novo_jogo(Celula tabuleiro[][COLUNAS], Nanograma *nanograma)
 {
     if (nanograma->usuario_ganhou == true)
         nanograma->usuario_ganhou = false;
+    
     inicia_tabuleiro(tabuleiro, nanograma);
 }
 
@@ -290,7 +295,7 @@ void inicia_tabuleiro(Celula tabuleiro[][COLUNAS], Nanograma *nanograma)
 {
     inicializa_jogo(nanograma);
     cria_gabarito(nanograma);
-    gera_numeros_array(nanograma);
+    gera_numeros_gabarito(nanograma);
 
     for (int i = 0; i < LINHAS; i++)
     {
@@ -306,16 +311,9 @@ void inicia_tabuleiro(Celula tabuleiro[][COLUNAS], Nanograma *nanograma)
             if (nanograma->gabarito[i][j] == COLORIDO)
             {
                 nanograma->quant_celulas_pintar++;
-                 printf("%d, ", COLORIDO);
-            }
-            else
-            {
-                 printf("%d, ", VAZIO);
             }
         }
-         printf("\n");
     }
-    printf("\n\n");
 }
 
 void desenha_menu(Tela *t, Lista_Botao *button)
@@ -326,7 +324,8 @@ void desenha_menu(Tela *t, Lista_Botao *button)
     desenha_botao(button->lista_btn[MODO_CLASSICO], "CLASSICO", t);
 }
 
-void desenhar_botoes(Lista_Botao *button, Tela *t, Nanograma *nanograma){
+void desenhar_botoes(Lista_Botao *button, Tela *t, Nanograma *nanograma)
+{
     char dicas_restantes[10];
     sprintf(dicas_restantes, "%d", nanograma->dicas_restante);
 
@@ -335,7 +334,8 @@ void desenhar_botoes(Lista_Botao *button, Tela *t, Nanograma *nanograma){
     desenha_botao(button->lista_btn[LIMPAR], "LIMPAR", t);
     desenha_botao(button->lista_btn[NOVO_NANOGRAMA], "NOVO NANOGRAMA", t);
     desenha_botao(button->lista_btn[MENU], "MENU", t);
-    if(nanograma->modo == MD_CLASSICO){
+    if (nanograma->modo == MD_CLASSICO)
+    {
         desenha_botao(button->lista_btn[DESFAZER], "DESFAZER", t);
         desenha_botao(button->lista_btn[DICA], dicas_restantes, t);
     }
@@ -388,47 +388,32 @@ void desenha_tabuleiro(Tela *t, Celula tabuleiro[][COLUNAS], Nanograma *nanogram
         escreve_numeros(t, nanograma->numeros_coluna[j], nanograma->quant_numeros_coluna[j], p, false);
     }
     desenhar_botoes(button, t, nanograma);
-    
+
     if (nanograma->usuario_ganhou == true)
     {
         Ponto txt_ganhou = {(LARGURA_JANELA / 2) - 40, 40};
         escreve_texto(t, txt_ganhou, "GANHOU");
     }
-    if(nanograma->usuario_perdeu == true){
+    if (nanograma->usuario_perdeu == true)
+    {
         Ponto txt_ganhou = {(LARGURA_JANELA / 2) - 40, 40};
         escreve_texto(t, txt_ganhou, "PERDEU");
     }
-    if(nanograma->modo == MD_NORMAL){
+    if (nanograma->modo == MD_NORMAL)
+    {
         desenhar_vidas(t, nanograma);
     }
+    if(nanograma->modo == MD_CLASSICO)
     desenha_texto_celulas_restantes(t, nanograma, tabuleiro);
 }
-void desenhar_vidas(Tela *t, Nanograma *nanograma){
+void desenhar_vidas(Tela *t, Nanograma *nanograma)
+{
     char txt_vidas[20];
     sprintf(txt_vidas, "Vidas: %d", nanograma->vidas_restante);
     Ponto p = {20, 40};
     escreve_texto(t, p, txt_vidas);
 }
-void calcula_celulas_restante(Nanograma *nanograma, Celula tabuleiro[][COLUNAS])
-{
-    nanograma->quant_celulas_pintadas = 0;
-    int i, j;
-    int prim_linha = -1, prim_coluna = -1;
-    for (i = 0; i < LINHAS; i++)
-    {
-        for (j = 0; j < COLUNAS; j++)
-        {
-            if (tabuleiro[i][j].estado == COLORIDO)
-            {
-                nanograma->quant_celulas_pintadas++;
-            }
-            if(nanograma->quant_celulas_pintadas > nanograma->quant_celulas_pintar){
-                tabuleiro[nanograma->jogada.jogada_passada_i][nanograma->jogada.jogada_passada_j].estado = VAZIO;
-                nanograma->quant_celulas_pintadas--;
-            }
-        }
-    }
-}
+
 void desenha_texto_celulas_restantes(Tela *t, Nanograma *nanograma, Celula tabuleiro[][COLUNAS])
 {
     char txt_qnt_celul_pint[LINHAS * COLUNAS];
@@ -443,46 +428,50 @@ void desenha_texto_celulas_restantes(Tela *t, Nanograma *nanograma, Celula tabul
     escreve_texto(t, pt_qnt_celulas_pintar, txt_qnt_celul_pint);
 }
 
-void desenhar_dica(Nanograma *nanograma, Celula tabuleiro[][COLUNAS]){
+void desenhar_dica(Nanograma *nanograma, Celula tabuleiro[][COLUNAS])
+{
     bool mostrou_dica = false;
-    if(nanograma->dicas_restante == 0 || nanograma->usuario_ganhou == true){
+    if (nanograma->dicas_restante == 0 || nanograma->usuario_ganhou == true)
+    {
         return;
     }
     nanograma->dicas_restante--;
-    do{
+    do
+    {
         int random_i_dica = rand() % 8;
         int random_j_dica = rand() % 8;
-        if(nanograma->gabarito[random_i_dica][random_j_dica] == COLORIDO && tabuleiro[random_i_dica][random_j_dica].estado == VAZIO){
+        if (nanograma->gabarito[random_i_dica][random_j_dica] == COLORIDO && tabuleiro[random_i_dica][random_j_dica].estado == VAZIO)
+        {
             tabuleiro[random_i_dica][random_j_dica].estado = COLORIDO;
             mostrou_dica = true;
             atualiza_historico_jogada(nanograma, random_i_dica, random_j_dica);
         }
-        
-    }while(!mostrou_dica);
+
+    } while (!mostrou_dica);
 }
 
-// escreve os numeros (vetor), a partir de uma coordenada, horizontalmente ou verticalmente
-void escreve_numeros(Tela *t, int numeros[], int qtd, Ponto inicio, bool horizontal)
+void calcula_celulas_restante(Nanograma *nanograma, Celula tabuleiro[][COLUNAS])
 {
-    int x = inicio.x, y = inicio.y, offset = 20;
-    for (int i = qtd - 1; i >= 0; i--)
+    nanograma->quant_celulas_pintadas = 0;
+    int i, j;
+    int prim_linha = -1, prim_coluna = -1;
+    for (i = 0; i < LINHAS; i++)
     {
-        char buffer[10];
-        sprintf(buffer, "%d", numeros[i]);
-        if (horizontal)
+        for (j = 0; j < COLUNAS; j++)
         {
-            if (i > 0)
-                strcat(buffer, ","); // se horizontal separa os numeros com , (menos no numero mais a direita)
-            x -= offset;
+            if (tabuleiro[i][j].estado == COLORIDO)
+            {
+                nanograma->quant_celulas_pintadas++;
+            }
+            if (nanograma->quant_celulas_pintadas > nanograma->quant_celulas_pintar)
+            {
+                tabuleiro[nanograma->jogada.jogada_passada_i][nanograma->jogada.jogada_passada_j].estado = VAZIO;
+                nanograma->quant_celulas_pintadas--;
+            }
         }
-        else
-            y -= offset;
-
-        Ponto p = {x, y};
-        // escreve o numero na posicao/coordenada definada
-        escreve_texto(t, p, buffer);
     }
 }
+
 void verifica_clique_botao(Tela *t, Celula tabuleiro[][COLUNAS], Nanograma *nanograma, Lista_Botao *button, Ponto mouse, bool *menu_show)
 {
     for (int i = 0; i < QNT_BOTOES; i++)
@@ -549,6 +538,8 @@ void verifica_clique_menu(Tela *t, Celula tabuleiro[][COLUNAS], Nanograma *nanog
     }
     t->_botao = false;
 }
+
+
 void atualiza_historico_jogada(Nanograma *nanograma, int i, int j)
 {
     if (nanograma->jogada.jogada_passada_i == -1 && nanograma->jogada.jogada_passada_j == -1)
@@ -567,12 +558,15 @@ void atualiza_historico_jogada(Nanograma *nanograma, int i, int j)
     }
 }
 
-void verifica_erro(Nanograma *nanograma, Celula tabuleiro[][COLUNAS], int i, int j){
-    if(nanograma->gabarito[i][j] != COLORIDO){
+void verifica_erro(Nanograma *nanograma, Celula tabuleiro[][COLUNAS], int i, int j)
+{
+    if (nanograma->gabarito[i][j] != COLORIDO)
+    {
         nanograma->vidas_restante--;
         tabuleiro[i][j].estado = ALERTA;
-        if(nanograma->vidas_restante <= 0){
-            nanograma->usuario_perdeu = true;        
+        if (nanograma->vidas_restante <= 0)
+        {
+            nanograma->usuario_perdeu = true;
         }
     }
 }
@@ -598,13 +592,18 @@ void verifica_clique(Tela *t, Celula tabuleiro[][COLUNAS], Nanograma *nanograma,
             // verifica se eh uma celula valida
             if (i >= 0 && i < LINHAS && j >= 0 && j < COLUNAS)
             {
-                if(nanograma->usuario_ganhou == true || nanograma->usuario_perdeu == true) return;
-                if (t->_tecla == 2) {
+                if (nanograma->usuario_ganhou == true || nanograma->usuario_perdeu == true)
+                    return;
+                if (t->_tecla == 2)
+                {
                     tabuleiro[i][j].estado = (tabuleiro[i][j].estado == VAZIO) ? ALERTA : VAZIO;
-                }else{
+                }
+                else
+                {
                     atualiza_historico_jogada(nanograma, i, j);
                     cicla_estado_celula(&tabuleiro[i][j]);
-                    if(nanograma->modo == MD_NORMAL) verifica_erro(nanograma, tabuleiro, i ,j);
+                    if (nanograma->modo == MD_NORMAL)
+                        verifica_erro(nanograma, tabuleiro, i, j);
 
                     /* dica: aqui eh um bom lugar para verificar se o usuario venceu :) */
                     if (verifica_vitoria(nanograma, tabuleiro))
@@ -615,6 +614,30 @@ void verifica_clique(Tela *t, Celula tabuleiro[][COLUNAS], Nanograma *nanograma,
             }
         }
         t->_botao = false; // clique ja foi tratado!
+    }
+}
+
+
+// escreve os numeros (vetor), a partir de uma coordenada, horizontalmente ou verticalmente
+void escreve_numeros(Tela *t, int numeros[], int qtd, Ponto inicio, bool horizontal)
+{
+    int x = inicio.x, y = inicio.y, offset = 20;
+    for (int i = qtd - 1; i >= 0; i--)
+    {
+        char buffer[10];
+        sprintf(buffer, "%d", numeros[i]);
+        if (horizontal)
+        {
+            if (i > 0)
+                strcat(buffer, ","); // se horizontal separa os numeros com , (menos no numero mais a direita)
+            x -= offset;
+        }
+        else
+            y -= offset;
+
+        Ponto p = {x, y};
+        // escreve o numero na posicao/coordenada definada
+        escreve_texto(t, p, buffer);
     }
 }
 
