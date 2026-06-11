@@ -118,9 +118,10 @@ void processa_eventos(Tela *t) {
                 break;
             }
             case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN: {
-                if (event.mouse.button == 1 || event.mouse.button == 2)
+                if (event.mouse.button == 1 || event.mouse.button == 2){
                     t->_botao = true;
                     t->_tecla = event.mouse.button;
+                }
                 break;
             }
             case ALLEGRO_EVENT_MOUSE_BUTTON_UP: {

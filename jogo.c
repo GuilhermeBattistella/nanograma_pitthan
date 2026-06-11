@@ -454,7 +454,6 @@ void calcula_celulas_restante(Nanograma *nanograma, Celula tabuleiro[][COLUNAS])
 {
     nanograma->quant_celulas_pintadas = 0;
     int i, j;
-    int prim_linha = -1, prim_coluna = -1;
     for (i = 0; i < LINHAS; i++)
     {
         for (j = 0; j < COLUNAS; j++)
