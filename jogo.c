@@ -21,12 +21,13 @@ void desenha_botao(Retangulo btn, char *txt, Tela *t);
 void verifica_clique_botao(Tela *t, Celula tabuleiro[][COLUNAS], Nanograma *nanograma, Lista_Botao *button, Ponto mouse, bool *menu_show);
 void desenha_menu(Tela *t, Lista_Botao *button);
 void verifica_clique_menu(Tela *t, Celula tabuleiro[][COLUNAS], Nanograma *nanograma, Lista_Botao *button, bool *menu_show);
-void define_botoes(Lista_Botao *btn);
+void define_botoes(Lista_Botao *btn, Nanograma *nanograma);
 void desenha_texto_celulas_restantes(Tela *t, Nanograma *nanograma, Celula tabuleiro[][COLUNAS]);
 void inicializa_jogo(Nanograma *nanograma);
 void atualiza_historico_jogada(Nanograma *nanograma, int i, int j);
-void desenhar_botoes(Lista_Botao *button, Tela *t, int dicas);
+void desenhar_botoes(Lista_Botao *button, Tela *t, Nanograma *nanograma);
 void desenhar_dica(Nanograma *nanograma, Celula tabuleiro[][COLUNAS]);
+void desenhar_vidas(Tela *t, Nanograma *nanograma);
 
 int main(int argc, char **argv)
 {
@@ -42,7 +43,7 @@ int main(int argc, char **argv)
 
     inicia_tela(&t, LARGURA_JANELA, ALTURA_JANELA, TITULO_JANELA);
 
-    define_botoes(&btn);
+    define_botoes(&btn, &jogo);
 
     while ((tecla_pressionada = codigo_tecla(&t)) != ALLEGRO_EVENT_DISPLAY_CLOSE)
     {
@@ -59,9 +60,8 @@ int main(int argc, char **argv)
         else
         {
             limpa_tela(&t);
-
-            desenha_tabuleiro(&t, tabuleiro_nonogram, &jogo, &btn);
             verifica_clique(&t, tabuleiro_nonogram, &jogo, &btn, &menu_show);
+            desenha_tabuleiro(&t, tabuleiro_nonogram, &jogo, &btn);
 
             mostra_tela();
 
@@ -77,15 +77,20 @@ int main(int argc, char **argv)
 
 void inicializa_jogo(Nanograma *nanograma)
 {
-    memset(nanograma, 0, sizeof(nanograma));
+    Modo modo_atual = nanograma->modo;
+    memset(nanograma, 0, sizeof(Nanograma));
     nanograma->usuario_ganhou = false;
+    nanograma->usuario_perdeu = false;
     nanograma->quant_celulas_pintadas = 0;
     nanograma->jogada.jogada_passada_i = -1;
     nanograma->jogada.jogada_passada_j = -1;
     nanograma->dicas_restante = MAX_DICAS;
+    nanograma->vidas_restante = MAX_VIDA;
+    nanograma->modo = modo_atual;
+    printf("%d", nanograma->modo);
 }
 
-void define_botoes(Lista_Botao *btn)
+void define_botoes(Lista_Botao *btn, Nanograma *nanograma)
 {
     btn->lista_btn[LIMPAR] = cria_botao(150, 650, 100, 50);
     btn->lista_btn[NOVO_NANOGRAMA] = cria_botao(300, 650, 200, 50);
@@ -94,6 +99,7 @@ void define_botoes(Lista_Botao *btn)
     btn->lista_btn[MENU] = cria_botao(550, 650, 100, 50);
     btn->lista_btn[DESFAZER] = cria_botao(150, 720, 100, 50);
     btn->lista_btn[DICA] = cria_botao(300, 720, 100, 50);
+    
 }
 
 Retangulo cria_botao(int x1, int y1, int width, int height)
@@ -140,7 +146,7 @@ void cria_gabarito(Nanograma *nanograma)
                 }
             }
         }
-    } while (verifica_gabarito(nanograma) < 25);
+    } while (verifica_gabarito(nanograma) < MIN_CEL_PINTAR);
 }
 void gera_numeros_array(Nanograma *nanograma)
 {
@@ -276,7 +282,6 @@ void novo_jogo(Celula tabuleiro[][COLUNAS], Nanograma *nanograma)
 {
     if (nanograma->usuario_ganhou == true)
         nanograma->usuario_ganhou = false;
-    memset(nanograma, 0, sizeof(Nanograma));
     inicia_tabuleiro(tabuleiro, nanograma);
 }
 
@@ -321,17 +326,19 @@ void desenha_menu(Tela *t, Lista_Botao *button)
     desenha_botao(button->lista_btn[MODO_CLASSICO], "CLASSICO", t);
 }
 
-void desenhar_botoes(Lista_Botao *button, Tela *t, int dicas){
+void desenhar_botoes(Lista_Botao *button, Tela *t, Nanograma *nanograma){
     char dicas_restantes[10];
-    sprintf(dicas_restantes, "%d", dicas);
+    sprintf(dicas_restantes, "%d", nanograma->dicas_restante);
 
     strcat(dicas_restantes, " :DICAS");
 
     desenha_botao(button->lista_btn[LIMPAR], "LIMPAR", t);
     desenha_botao(button->lista_btn[NOVO_NANOGRAMA], "NOVO NANOGRAMA", t);
     desenha_botao(button->lista_btn[MENU], "MENU", t);
-    desenha_botao(button->lista_btn[DESFAZER], "DESFAZER", t);
-    desenha_botao(button->lista_btn[DICA], dicas_restantes, t);
+    if(nanograma->modo == MD_CLASSICO){
+        desenha_botao(button->lista_btn[DESFAZER], "DESFAZER", t);
+        desenha_botao(button->lista_btn[DICA], dicas_restantes, t);
+    }
 }
 
 // desenha tabuleiro (celulas) e os numeros nas linhas e colunas
@@ -380,14 +387,27 @@ void desenha_tabuleiro(Tela *t, Celula tabuleiro[][COLUNAS], Nanograma *nanogram
         // escreve os numeros (vetor), a partir de uma coordenada. escrita horizontal = false
         escreve_numeros(t, nanograma->numeros_coluna[j], nanograma->quant_numeros_coluna[j], p, false);
     }
-    desenhar_botoes(button, t, nanograma->dicas_restante);
+    desenhar_botoes(button, t, nanograma);
     
     if (nanograma->usuario_ganhou == true)
     {
         Ponto txt_ganhou = {(LARGURA_JANELA / 2) - 40, 40};
         escreve_texto(t, txt_ganhou, "GANHOU");
     }
+    if(nanograma->usuario_perdeu == true){
+        Ponto txt_ganhou = {(LARGURA_JANELA / 2) - 40, 40};
+        escreve_texto(t, txt_ganhou, "PERDEU");
+    }
+    if(nanograma->modo == MD_NORMAL){
+        desenhar_vidas(t, nanograma);
+    }
     desenha_texto_celulas_restantes(t, nanograma, tabuleiro);
+}
+void desenhar_vidas(Tela *t, Nanograma *nanograma){
+    char txt_vidas[20];
+    sprintf(txt_vidas, "Vidas: %d", nanograma->vidas_restante);
+    Ponto p = {20, 40};
+    escreve_texto(t, p, txt_vidas);
 }
 void calcula_celulas_restante(Nanograma *nanograma, Celula tabuleiro[][COLUNAS])
 {
@@ -512,11 +532,13 @@ void verifica_clique_menu(Tela *t, Celula tabuleiro[][COLUNAS], Nanograma *nanog
                 switch (i)
                 {
                 case MODO_NORMAL:
-                    //*menu_show = false;
-                    //novo_jogo(tabuleiro, nanograma);
+                    *menu_show = false;
+                    nanograma->modo = MD_NORMAL;
+                    novo_jogo(tabuleiro, nanograma);
                     break;
                 case MODO_CLASSICO:
                     *menu_show = false;
+                    nanograma->modo = MD_CLASSICO;
                     novo_jogo(tabuleiro, nanograma);
                     break;
                 default:
@@ -545,6 +567,16 @@ void atualiza_historico_jogada(Nanograma *nanograma, int i, int j)
     }
 }
 
+void verifica_erro(Nanograma *nanograma, Celula tabuleiro[][COLUNAS], int i, int j){
+    if(nanograma->gabarito[i][j] != COLORIDO){
+        nanograma->vidas_restante--;
+        tabuleiro[i][j].estado = ALERTA;
+        if(nanograma->vidas_restante <= 0){
+            nanograma->usuario_perdeu = true;        
+        }
+    }
+}
+
 // verifica se houve um clique em alguma celula no tabuleiro
 void verifica_clique(Tela *t, Celula tabuleiro[][COLUNAS], Nanograma *nanograma, Lista_Botao *button, bool *menu_show)
 {
@@ -566,14 +598,19 @@ void verifica_clique(Tela *t, Celula tabuleiro[][COLUNAS], Nanograma *nanograma,
             // verifica se eh uma celula valida
             if (i >= 0 && i < LINHAS && j >= 0 && j < COLUNAS)
             {
-                if(nanograma->usuario_ganhou == true) return;
-                atualiza_historico_jogada(nanograma, i, j);
-                cicla_estado_celula(&tabuleiro[i][j]);
+                if(nanograma->usuario_ganhou == true || nanograma->usuario_perdeu == true) return;
+                if (t->_tecla == 2) {
+                    tabuleiro[i][j].estado = (tabuleiro[i][j].estado == VAZIO) ? ALERTA : VAZIO;
+                }else{
+                    atualiza_historico_jogada(nanograma, i, j);
+                    cicla_estado_celula(&tabuleiro[i][j]);
+                    if(nanograma->modo == MD_NORMAL) verifica_erro(nanograma, tabuleiro, i ,j);
 
-                /* dica: aqui eh um bom lugar para verificar se o usuario venceu :) */
-                if (verifica_vitoria(nanograma, tabuleiro))
-                {
-                    nanograma->usuario_ganhou = true;
+                    /* dica: aqui eh um bom lugar para verificar se o usuario venceu :) */
+                    if (verifica_vitoria(nanograma, tabuleiro))
+                    {
+                        nanograma->usuario_ganhou = true;
+                    }
                 }
             }
         }

@@ -93,7 +93,7 @@ int codigo_tecla(Tela *t) {
     int tecla;
     processa_eventos(t);
     tecla = t->_tecla;
-    t->_tecla = 0;
+    //t->_tecla = 0;
     // retorna a ultima _tecla pressionada
     return tecla;
 }
@@ -120,6 +120,7 @@ void processa_eventos(Tela *t) {
             case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN: {
                 if (event.mouse.button == 1 || event.mouse.button == 2)
                     t->_botao = true;
+                    t->_tecla = event.mouse.button;
                 break;
             }
             case ALLEGRO_EVENT_MOUSE_BUTTON_UP: {
