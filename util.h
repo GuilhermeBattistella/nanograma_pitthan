@@ -111,7 +111,7 @@ typedef struct tela {
     int _tecla;                 // ultima tecla apertada
 } Tela;
 
-//essas 2 structs o chatgpt me ajudou a criar essa ideia pra que eu não precise ficar passando os botoens por parametro, e sim uma struct com a lista de todos os botoes
+//essas 2 structs (index_botao e lista_botao) o chatgpt me ajudou a criar essa ideia pra que eu não precise ficar passando os botoens por parametro, e sim uma struct com a lista de todos os botoes
 typedef enum index_botao{
     LIMPAR,
     NOVO_NANOGRAMA,

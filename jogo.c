@@ -499,6 +499,7 @@ void verifica_clique_botao(Tela *t, Celula tabuleiro[][COLUNAS], Nanograma *nano
                 break;
             case DICA:
                 desenhar_dica(nanograma, tabuleiro);
+                break;
             default:
                 break;
             }
