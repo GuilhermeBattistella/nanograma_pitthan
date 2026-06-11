@@ -20,6 +20,13 @@
 #define MARGIN_HORIZONTAL (int) ((LARGURA_JANELA / 2) - (LARGURA_TABULEIRO / 2))
 #define MARGIN_VERTICAL  (int) ((ALTURA_JANELA / 2) - (ALTURA_TABULEIRO / 2))
 
+#define MAX_DICAS 3
+
+typedef struct jogada{
+    int jogada_passada_i, jogada_passada_j;
+    int nova_jogada_i, nova_jogada_j;
+} Jogada;
+
 typedef struct nanograma{
     int gabarito[LINHAS][COLUNAS];
 
@@ -31,6 +38,11 @@ typedef struct nanograma{
 
     bool usuario_ganhou;
     int quant_celulas_pintar;
+    int quant_celulas_pintadas;
+    
+    Jogada jogada;
+
+    int dicas_restante;
 } Nanograma;
 
 typedef struct menu{
@@ -95,6 +107,8 @@ typedef enum index_botao{
     MODO_NORMAL,
     MODO_CLASSICO,
     MENU,
+    DESFAZER,
+    DICA,
     QNT_BOTOES
 } Index_Botao;
 
